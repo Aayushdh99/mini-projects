@@ -7,6 +7,8 @@ import os
 import time
 from PIL import Image
 import numpy as np
+import sqlite3
+
 
 def transform_fn(image):
     # Get the size of the image
@@ -76,7 +78,60 @@ def calculate_labels(image):
 def process_data(filename):
     try:
         image = Image.open('folder_path/'+filename).convert('RGB')
-        return calculate_labels(image)
+
+        # Connecting to sqlite
+        conn = sqlite3.connect('imagemetadata.db')
+
+        # Creating a cursor object using the
+        # cursor() method
+        cursor = conn.cursor()
+
+        #######################
+        a = ['image.jpg', 'person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat',
+             'traffic', 'fire', 'street', 'stop', 'parking', 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow',
+             'elephant', 'bear', 'zebra', 'giraffe', 'hat', 'backpack', 'umbrella', 'shoe', 'eye', 'handbag', 'tie',
+             'suitcase', 'frisbee', 'skis', 'snowboard', 'sports', 'kite', 'baseball', 'skateboard', 'surfboard',
+             'tennis', 'bottle', 'plate', 'wine', 'cup', 'fork', 'knife', 'spoon', 'bowl', 'banana', 'apple',
+             'sandwich', 'orange', 'broccoli', 'carrot', 'hot', 'pizza', 'donut', 'cake', 'chair', 'couch', 'potted',
+             'bed',
+             'mirror', 'dining', 'window', 'desk', 'toilet', 'door', 'tv', 'laptop', 'mouse', 'remote', 'keyboard',
+             'cell', 'microwave', 'oven', 'toaster', 'sink', 'refrigerator', 'blender', 'book', 'clock', 'vase',
+             'scissors', 'teddy', 'toothbrush', 'hair']
+
+        a[0] = filename
+        list_a = calculate_labels(image)
+        print('Labels found:', list_a)
+
+        set_a = set(list_a)
+
+        for i in range(1, 90):
+            if a[i] in set_a:
+                a[i] = 1
+            else:
+                a[i] = 0
+
+        tup_a = tuple(a)
+
+        # Queries to INSERT records.
+        query_string = """INSERT INTO IMAGE_TAGS (image_name, person, bicycle, car, motorcycle, airplane, bus, train, truck, boat, traffic, fire, street, stop, parking, bench, bird, cat, dog, horse, sheep, cow, elephant, bear, zebra, giraffe, hat, backpack, umbrella, shoe, eye, handbag, tie, suitcase, frisbee, skis, snowboard, sports, kite, baseball, skateboard, surfboard, tennis, bottle, plate, wine, cup, fork, knife, spoon, bowl, banana, apple, sandwich, orange, broccoli, carrot, hot, pizza, donut, cake, chair, couch, potted, bed, mirror, dining, window, desk, toilet, door, tv, laptop, mouse, remote, keyboard, cell, microwave, oven, toaster, sink, refrigerator, blender, book, clock, vase, scissors, teddy, toothbrush, hair) 
+        VALUES {}
+        """.format(tup_a)
+        # print(query_string)
+
+        cursor.execute(query_string)
+
+        # Display data - SELECT ALL
+        # data = cursor.execute('''SELECT * FROM IMAGE_TAGS''')
+        # for row in data:
+        #     print(row)
+
+        # Commit your changes in the database
+        conn.commit()
+
+        # Closing the connection
+        conn.close()
+
+        return "Image tags added to DB"
     except Exception as e:
         return e
 
